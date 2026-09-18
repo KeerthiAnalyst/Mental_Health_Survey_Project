@@ -160,9 +160,6 @@ with st.expander("ℹ️ About the Dataset", expanded=True):
     - Wellness programs
     - Geographic patterns
 
-    **Important note:** This is survey-based observational data.
-    The relationships shown in this dashboard represent associations
-    and should not be interpreted as proof of cause and effect.
     """)
 
 
