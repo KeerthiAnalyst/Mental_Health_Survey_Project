@@ -42,6 +42,32 @@ h1, h2, h3 {
     border: 1px solid #D6CBE5;
 }
 
+[data-testid="stMetricValue"] {
+    color: #4B3869;
+}
+
+.insight-box {
+    background-color: white;
+    padding: 18px;
+    border-radius: 12px;
+    border-left: 5px solid #7B68A8;
+    margin-bottom: 12px;
+}
+
+.info-box {
+    background-color: white;
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid #D6CBE5;
+}
+
+.footer {
+    text-align: center;
+    color: #6B6178;
+    padding: 25px 0 10px 0;
+    font-size: 14px;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -102,12 +128,60 @@ if "work_interfere" in df.columns:
 # PAGE TITLE
 # ============================================================
 
-st.title("Mental Health in Tech Survey")
+st.title("🧠 Mental Health in Tech Survey")
 
 st.write(
     "Exploratory analysis of mental health and workplace factors "
-    "in the tech industry."
+    "in the technology industry."
 )
+
+
+# ============================================================
+# ABOUT THE DATA
+# ============================================================
+
+with st.expander("ℹ️ About the Dataset", expanded=True):
+
+    st.markdown("""
+    **Project Objective**
+
+    This dashboard explores mental health treatment-seeking behaviour
+    among respondents working in the technology sector and examines
+    how it varies across demographic and workplace factors.
+
+    **Key areas analyzed**
+
+    - Mental health treatment
+    - Family history of mental illness
+    - Work interference
+    - Workplace mental health benefits
+    - Care options and anonymity
+    - Company size
+    - Wellness programs
+    - Geographic patterns
+
+    **Important note:** This is survey-based observational data.
+    The relationships shown in this dashboard represent associations
+    and should not be interpreted as proof of cause and effect.
+    """)
+
+
+# ============================================================
+# HOW TO USE DASHBOARD
+# ============================================================
+
+with st.expander("📊 How to Use This Dashboard"):
+
+    st.markdown("""
+    Use the filters in the left sidebar to explore the data by:
+
+    - **Mental Health Treatment**
+    - **Gender**
+
+    The charts and KPI cards update based on the selected filters.
+
+    Hover over charts where applicable to view additional details.
+    """)
 
 
 # ============================================================
@@ -115,6 +189,10 @@ st.write(
 # ============================================================
 
 st.sidebar.header("Dashboard Filters")
+
+st.sidebar.caption(
+    "Use these filters to explore the survey responses."
+)
 
 
 # Treatment filter
@@ -163,8 +241,34 @@ if gender_filter != "All":
 
 
 # ============================================================
+# FILTER STATUS
+# ============================================================
+
+active_filters = []
+
+if treatment_filter != "All":
+    active_filters.append(
+        f"Treatment: {treatment_filter}"
+    )
+
+if gender_filter != "All":
+    active_filters.append(
+        f"Gender: {gender_filter}"
+    )
+
+if active_filters:
+
+    st.info(
+        "Active filters: " +
+        " | ".join(active_filters)
+    )
+
+
+# ============================================================
 # KEY METRICS
 # ============================================================
+
+st.subheader("Key Metrics")
 
 col1, col2, col3 = st.columns(3)
 
@@ -172,7 +276,7 @@ col1, col2, col3 = st.columns(3)
 # Total responses
 col1.metric(
     "Total Responses",
-    len(filtered_df)
+    f"{len(filtered_df):,}"
 )
 
 
@@ -184,7 +288,7 @@ treatment_count = (
 
 col2.metric(
     "Mental Health Treatment",
-    treatment_count
+    f"{treatment_count:,}"
 )
 
 
@@ -208,82 +312,17 @@ col3.metric(
 
 
 # ============================================================
-# 1. TREATMENT RATE BY COUNTRY
+# RESPONDENT PROFILE
 # ============================================================
 
-st.subheader(
-    "Treatment Rate by Country (20+ Respondents)"
-)
-
-
-country_summary = (
-    filtered_df
-    .groupby("Country")
-    .agg(
-        Respondents=("treatment", "count"),
-        Treatment_Rate=(
-            "treatment",
-            lambda x: (x == "Yes").mean() * 100
-        )
-    )
-)
-
-
-country_summary = country_summary[
-    country_summary["Respondents"] >= 20
-]
-
-
-plot_data = country_summary.sort_values(
-    "Treatment_Rate",
-    ascending=True
-)
-
-
-fig = px.bar(
-    plot_data,
-    x="Treatment_Rate",
-    y=plot_data.index,
-    orientation="h",
-    text="Treatment_Rate",
-    hover_data={
-        "Treatment_Rate": ":.1f",
-        "Respondents": True
-    }
-)
-
-
-fig.update_traces(
-    marker_color="#7B68A8",
-    texttemplate="%{text:.0f}%",
-    textposition="outside"
-)
-
-
-fig.update_layout(
-    xaxis_title="Treatment Rate (%)",
-    yaxis_title="Country",
-    xaxis_range=[0, 80],
-    height=500,
-    plot_bgcolor="rgba(0,0,0,0)",
-    paper_bgcolor="rgba(0,0,0,0)",
-    margin=dict(l=20, r=40, t=30, b=20)
-)
-
-
-st.plotly_chart(
-    fig,
-    use_container_width=True
-)
+st.header("👥 Respondent Profile")
 
 
 # ============================================================
-# 2. AGE DISTRIBUTION
+# AGE DISTRIBUTION
 # ============================================================
 
-st.subheader(
-    "Age Distribution of Respondents"
-)
+st.subheader("Age Distribution of Respondents")
 
 
 fig, ax = plt.subplots(
@@ -300,18 +339,13 @@ sns.histplot(
 )
 
 
-ax.set_title(
-    "Age Distribution of Respondents"
-)
+ax.set_xlabel("Age")
+ax.set_ylabel("Number of Respondents")
 
-ax.set_xlabel(
-    "Age"
+ax.grid(
+    axis="y",
+    alpha=0.2
 )
-
-ax.set_ylabel(
-    "Number of Respondents"
-)
-
 
 plt.tight_layout()
 
@@ -324,12 +358,10 @@ plt.close(fig)
 
 
 # ============================================================
-# 3. RESPONDENTS BY GENDER
+# RESPONDENTS BY GENDER
 # ============================================================
 
-st.subheader(
-    "Respondents by Gender"
-)
+st.subheader("Respondents by Gender")
 
 
 gender_counts = (
@@ -357,25 +389,20 @@ for i, v in enumerate(
 
     ax.text(
         i,
-        v + 10,
+        v + max(gender_counts.values) * 0.02,
         str(v),
         ha="center",
         fontweight="bold"
     )
 
 
-ax.set_title(
-    "Respondents by Gender"
-)
+ax.set_xlabel("Gender")
+ax.set_ylabel("Number of Respondents")
 
-ax.set_xlabel(
-    "Gender"
+ax.grid(
+    axis="y",
+    alpha=0.2
 )
-
-ax.set_ylabel(
-    "Number of Respondents"
-)
-
 
 plt.tight_layout()
 
@@ -388,50 +415,7 @@ plt.close(fig)
 
 
 # ============================================================
-# 4. MENTAL HEALTH TREATMENT DISTRIBUTION
-# ============================================================
-
-st.subheader(
-    "Have You Sought Treatment for a Mental Health Condition?"
-)
-
-
-counts = (
-    filtered_df["treatment"]
-    .value_counts()
-)
-
-
-fig, ax = plt.subplots(
-    figsize=(6, 5)
-)
-
-
-ax.pie(
-    counts,
-    labels=counts.index,
-    autopct="%1.1f%%",
-    colors=[
-        "#7B68A8",
-        "#B8B0C8"
-    ],
-    startangle=90,
-        radius=0.75
-)
-
-
-plt.tight_layout()
-
-st.pyplot(
-    fig,
-    use_container_width=True
-)
-
-plt.close(fig)
-
-
-# ============================================================
-# 5. TOP 10 COUNTRIES BY RESPONDENTS
+# TOP 10 COUNTRIES
 # ============================================================
 
 st.subheader(
@@ -464,7 +448,7 @@ for i, v in enumerate(
 ):
 
     ax.text(
-        v + 10,
+        v + max(country_counts.values) * 0.01,
         i,
         str(v),
         va="center",
@@ -472,16 +456,61 @@ for i, v in enumerate(
     )
 
 
-ax.set_title(
-    "Top 10 Countries by Number of Respondents"
+ax.set_xlabel("Number of Respondents")
+ax.set_ylabel("Country")
+
+ax.grid(
+    axis="x",
+    alpha=0.2
 )
 
-ax.set_xlabel(
-    "Number of Respondents"
+plt.tight_layout()
+
+st.pyplot(
+    fig,
+    use_container_width=True
 )
 
-ax.set_ylabel(
-    "Country"
+plt.close(fig)
+
+
+# ============================================================
+# MENTAL HEALTH TREATMENT
+# ============================================================
+
+st.header("🧠 Mental Health Treatment")
+
+
+# ============================================================
+# TREATMENT DISTRIBUTION
+# ============================================================
+
+st.subheader(
+    "Have You Sought Treatment for a Mental Health Condition?"
+)
+
+
+counts = (
+    filtered_df["treatment"]
+    .value_counts()
+)
+
+
+fig, ax = plt.subplots(
+    figsize=(6, 5)
+)
+
+
+ax.pie(
+    counts,
+    labels=counts.index,
+    autopct="%1.1f%%",
+    colors=[
+        "#7B68A8",
+        "#B8B0C8"
+    ],
+    startangle=90,
+    radius=0.75
 )
 
 
@@ -496,7 +525,91 @@ plt.close(fig)
 
 
 # ============================================================
-# 6. TREATMENT RATE BY US STATE
+# TREATMENT RATE BY COUNTRY
+# ============================================================
+
+st.subheader(
+    "Treatment Rate by Country (20+ Respondents)"
+)
+
+
+country_summary = (
+    filtered_df
+    .groupby("Country")
+    .agg(
+        Respondents=("treatment", "count"),
+        Treatment_Rate=(
+            "treatment",
+            lambda x: (x == "Yes").mean() * 100
+        )
+    )
+)
+
+
+country_summary = country_summary[
+    country_summary["Respondents"] >= 20
+]
+
+
+plot_data = country_summary.sort_values(
+    "Treatment_Rate",
+    ascending=True
+)
+
+
+if not plot_data.empty:
+
+    fig = px.bar(
+        plot_data,
+        x="Treatment_Rate",
+        y=plot_data.index,
+        orientation="h",
+        text="Treatment_Rate",
+        hover_data={
+            "Treatment_Rate": ":.1f",
+            "Respondents": True
+        }
+    )
+
+
+    fig.update_traces(
+        marker_color="#7B68A8",
+        texttemplate="%{text:.0f}%",
+        textposition="outside"
+    )
+
+
+    fig.update_layout(
+        xaxis_title="Treatment Rate (%)",
+        yaxis_title="Country",
+        xaxis_range=[0, 80],
+        height=500,
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        margin=dict(
+            l=20,
+            r=40,
+            t=30,
+            b=20
+        )
+    )
+
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+else:
+
+    st.info(
+        "No countries meet the minimum 20 respondent threshold "
+        "for the current filters."
+    )
+
+
+# ============================================================
+# TREATMENT RATE BY US STATE
 # ============================================================
 
 st.subheader(
@@ -532,61 +645,75 @@ if "state" in filtered_df.columns:
     )
 
 
-    fig, ax = plt.subplots(
-        figsize=(9, 6)
-    )
+    if not plot_data.empty:
 
-
-    sns.barplot(
-        x=plot_data["Treatment_Rate"],
-        y=plot_data.index,
-        color="#7B68A8",
-        ax=ax
-    )
-
-
-    for i, (rate, n) in enumerate(
-        zip(
-            plot_data["Treatment_Rate"],
-            plot_data["Respondents"]
-        )
-    ):
-
-        ax.text(
-            rate + 1,
-            i,
-            f"{rate:.0f}% (n={n})",
-            va="center",
-            fontsize=9
+        fig, ax = plt.subplots(
+            figsize=(9, 6)
         )
 
 
-    ax.set_title(
-        "Treatment Rate by US State (20+ Respondents)"
-    )
-
-    ax.set_xlabel(
-        "Treatment Rate (%)"
-    )
-
-    ax.set_ylabel(
-        "State"
-    )
-
-    ax.set_xlim(
-        0,
-        80
-    )
+        sns.barplot(
+            x=plot_data["Treatment_Rate"],
+            y=plot_data.index,
+            color="#7B68A8",
+            ax=ax
+        )
 
 
-    plt.tight_layout()
+        for i, (rate, n) in enumerate(
+            zip(
+                plot_data["Treatment_Rate"],
+                plot_data["Respondents"]
+            )
+        ):
 
-    st.pyplot(
-        fig,
-        use_container_width=True
-    )
+            ax.text(
+                rate + 1,
+                i,
+                f"{rate:.0f}% (n={n})",
+                va="center",
+                fontsize=9
+            )
 
-    plt.close(fig)
+
+        ax.set_title(
+            "Treatment Rate by US State (20+ Respondents)"
+        )
+
+        ax.set_xlabel(
+            "Treatment Rate (%)"
+        )
+
+        ax.set_ylabel(
+            "State"
+        )
+
+        ax.set_xlim(
+            0,
+            80
+        )
+
+        ax.grid(
+            axis="x",
+            alpha=0.2
+        )
+
+
+        plt.tight_layout()
+
+        st.pyplot(
+            fig,
+            use_container_width=True
+        )
+
+        plt.close(fig)
+
+    else:
+
+        st.info(
+            "No US states meet the minimum 20 respondent "
+            "threshold for the current filters."
+        )
 
 else:
 
@@ -596,7 +723,14 @@ else:
 
 
 # ============================================================
-# 7. TREATMENT RATE BY KEY FACTORS
+# WORKPLACE FACTORS
+# ============================================================
+
+st.header("💼 Workplace Factors")
+
+
+# ============================================================
+# TREATMENT RATE BY KEY FACTORS
 # ============================================================
 
 st.subheader(
@@ -639,6 +773,11 @@ for ax, factor, title in zip(
     factors,
     titles
 ):
+
+    if factor not in filtered_df.columns:
+        ax.set_visible(False)
+        continue
+
 
     rates = (
         filtered_df
@@ -700,9 +839,7 @@ for ax, factor, title in zip(
         "Treatment Rate (%)"
     )
 
-    ax.set_xlabel(
-        ""
-    )
+    ax.set_xlabel("")
 
     ax.set_ylim(
         0,
@@ -712,6 +849,11 @@ for ax, factor, title in zip(
     ax.tick_params(
         axis="x",
         rotation=20
+    )
+
+    ax.grid(
+        axis="y",
+        alpha=0.2
     )
 
 
@@ -726,7 +868,7 @@ plt.close(fig)
 
 
 # ============================================================
-# 8. TREATMENT RATE BY COMPANY SIZE
+# COMPANY SIZE
 # ============================================================
 
 st.subheader(
@@ -770,10 +912,6 @@ for i, v in enumerate(
     )
 
 
-ax.set_title(
-    "Treatment Rate by Company Size"
-)
-
 ax.set_xlabel(
     "Number of Employees"
 )
@@ -785,6 +923,11 @@ ax.set_ylabel(
 ax.set_ylim(
     0,
     70
+)
+
+ax.grid(
+    axis="y",
+    alpha=0.2
 )
 
 
@@ -799,7 +942,7 @@ plt.close(fig)
 
 
 # ============================================================
-# 9. TREATMENT RATE BY WORKPLACE WELLNESS PROGRAM
+# WELLNESS PROGRAM
 # ============================================================
 
 st.subheader(
@@ -843,10 +986,6 @@ for i, v in enumerate(
     )
 
 
-ax.set_title(
-    "Treatment Rate by Workplace Wellness Program"
-)
-
 ax.set_xlabel(
     "Employer Provides Wellness Program"
 )
@@ -860,6 +999,11 @@ ax.set_ylim(
     70
 )
 
+ax.grid(
+    axis="y",
+    alpha=0.2
+)
+
 
 plt.tight_layout()
 
@@ -870,96 +1014,307 @@ st.pyplot(
 
 plt.close(fig)
 
+
 # ============================================================
 # KEY INSIGHTS
 # ============================================================
 
-st.subheader("Key Insights")
+st.header("💡 Key Insights")
 
-st.markdown("""
-- **Treatment:** Around half of the respondents reported seeking
-  treatment for a mental health condition.
 
-- **Family history:** Respondents with a family history of mental
-  illness show a different treatment pattern compared with those
-  without a family history.
+# ------------------------------------------------------------
+# Insight 1 - Overall Treatment
+# ------------------------------------------------------------
 
-- **Work interference:** Treatment rates vary across levels of
-  work interference, indicating a relationship between workplace
-  impact and treatment-seeking behaviour.
+st.markdown(
+    f"""
+    <div class="insight-box">
+    <b>1. Mental Health Treatment</b><br>
+    {treatment_count:,} out of {len(filtered_df):,} respondents
+    reported seeking treatment for a mental health condition,
+    representing a treatment rate of <b>{treatment_rate:.1f}%</b>.
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
-- **Workplace support:** Access to benefits, care options and
-  anonymity shows differences in treatment rates.
 
-- **Company size:** Treatment rates vary across different company
-  sizes, suggesting that workplace environment and available
-  support may differ by organization size.
-""")
+# ------------------------------------------------------------
+# Insight 2 - Family History
+# ------------------------------------------------------------
+
+if "family_history" in filtered_df.columns:
+
+    family_rates = (
+        filtered_df
+        .groupby("family_history")["treatment"]
+        .apply(
+            lambda x:
+            (x == "Yes").mean() * 100
+        )
+    )
+
+    if len(family_rates) >= 2:
+
+        family_text = "<br>".join(
+            [
+                f"<b>{group}:</b> {rate:.1f}% treatment rate"
+                for group, rate
+                in family_rates.items()
+            ]
+        )
+
+        st.markdown(
+            f"""
+            <div class="insight-box">
+            <b>2. Family History</b><br>
+            Treatment rates differed across family-history groups:<br>
+            {family_text}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+# ------------------------------------------------------------
+# Insight 3 - Work Interference
+# ------------------------------------------------------------
+
+if "work_interfere" in filtered_df.columns:
+
+    work_rates = (
+        filtered_df
+        .groupby("work_interfere")["treatment"]
+        .apply(
+            lambda x:
+            (x == "Yes").mean() * 100
+        )
+    )
+
+    work_rates = work_rates.dropna()
+
+    if not work_rates.empty:
+
+        highest_work_group = work_rates.idxmax()
+        highest_work_rate = work_rates.max()
+
+        st.markdown(
+            f"""
+            <div class="insight-box">
+            <b>3. Work Interference</b><br>
+            The highest observed treatment rate was
+            <b>{highest_work_rate:.1f}%</b> among respondents in the
+            <b>{highest_work_group}</b> work-interference group.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+# ------------------------------------------------------------
+# Insight 4 - Benefits
+# ------------------------------------------------------------
+
+if "benefits" in filtered_df.columns:
+
+    benefit_rates = (
+        filtered_df
+        .groupby("benefits")["treatment"]
+        .apply(
+            lambda x:
+            (x == "Yes").mean() * 100
+        )
+    )
+
+    if not benefit_rates.empty:
+
+        benefit_text = "<br>".join(
+            [
+                f"<b>{group}:</b> {rate:.1f}%"
+                for group, rate
+                in benefit_rates.items()
+            ]
+        )
+
+        st.markdown(
+            f"""
+            <div class="insight-box">
+            <b>4. Workplace Benefits</b><br>
+            Treatment rates differed across employer mental-health
+            benefit groups:<br>
+            {benefit_text}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+# ------------------------------------------------------------
+# Insight 5 - Company Size
+# ------------------------------------------------------------
+
+if "no_employees" in filtered_df.columns:
+
+    company_rates = (
+        filtered_df
+        .groupby("no_employees")["treatment"]
+        .apply(
+            lambda x:
+            (x == "Yes").mean() * 100
+        )
+    )
+
+    if not company_rates.empty:
+
+        company_text = "<br>".join(
+            [
+                f"<b>{group}:</b> {rate:.1f}%"
+                for group, rate
+                in company_rates.items()
+            ]
+        )
+
+        st.markdown(
+            f"""
+            <div class="insight-box">
+            <b>5. Company Size</b><br>
+            Treatment rates varied across company-size groups:<br>
+            {company_text}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 
 # ============================================================
-# BUSINESS SUMMARY
+# BUSINESS IMPLICATIONS
 # ============================================================
 
-st.subheader("Summary")
-
-st.write("""
-The analysis examines mental health treatment-seeking behaviour
-among technology-sector respondents and explores how it varies
-across demographic and workplace factors.
-
-The findings highlight the importance of workplace awareness,
-access to mental health resources, supportive policies and
-confidentiality. The analysis is based on survey responses and
-shows associations between variables rather than proving
-cause-and-effect relationships.
-""")
-
-
 # ============================================================
-# RECOMMENDATIONS
+# BUSINESS IMPLICATIONS
 # ============================================================
 
-st.subheader("Recommendations")
+st.header("📌 Business Implications")
 
 st.markdown("""
 ### 1. Improve Awareness
-Organizations can make employees more aware of available
-mental health resources, benefits and support programs.
+
+Organizations can improve awareness of available mental-health
+resources, benefits and support programs.
 
 ### 2. Strengthen Confidentiality
-Clear communication about privacy and anonymity may help employees
-feel more comfortable seeking support.
+
+Clear communication about privacy and anonymity may reduce
+uncertainty around accessing mental-health support.
 
 ### 3. Provide Accessible Support
-Companies can provide easily accessible information about
-counselling and employee assistance resources.
+
+Companies can make information about counselling and employee
+assistance resources easier to find and access.
 
 ### 4. Reduce Workplace Barriers
-Organizations can review workload, work environment and policies
-when employees report that mental health affects their work.
+
+Organizations can review workplace policies and employee support
+when mental health is reported as affecting work.
 
 ### 5. Monitor Workplace Support
-HR and leadership teams can periodically evaluate whether
-employees know about and can access available mental health
-resources.
+
+Organizations can periodically evaluate whether employees know
+about and can access available mental-health resources.
+
+**Note:** These implications are based on observed associations
+in survey data and should not be interpreted as causal effects.
 """)
+
+
+# ============================================================
+# DATA LIMITATIONS
+# ============================================================
+
+st.header("⚠️ Data Limitations")
+
+st.markdown("""
+- The dataset is based on survey responses and may not represent
+  the entire technology workforce.
+
+- The data comes from a specific survey period and may not reflect
+  current workplace conditions.
+
+- Some demographic and workplace categories contain missing or
+  limited responses.
+
+- Treatment rates describe associations between variables and do
+  not establish cause-and-effect relationships.
+
+- Geographic comparisons should be interpreted carefully because
+  respondent counts vary across countries and states.
+""")
+
+
+# ============================================================
+# SUMMARY
+# ============================================================
+
+st.header("📋 Summary")
+
+st.write(
+    f"""
+    This dashboard analyzes mental health treatment-seeking behaviour
+    among technology-sector survey respondents.
+
+    After applying the dashboard filters, the analysis contains
+    {len(filtered_df):,} respondents, of whom {treatment_count:,}
+    reported receiving mental health treatment. This corresponds to
+    a treatment rate of {treatment_rate:.1f}%.
+
+    The analysis also examines how treatment rates vary across
+    family history, work interference, workplace benefits,
+    company size, gender and other workplace factors.
+
+    The results highlight differences in treatment-seeking behaviour
+    across several groups while recognizing that the survey data
+    shows associations rather than causal relationships.
+    """
+)
 
 
 # ============================================================
 # CONCLUSION
 # ============================================================
 
-st.subheader("Conclusion")
+st.header("🎯 Conclusion")
 
 st.write("""
-Mental health treatment-seeking behaviour varies across several
-personal and workplace factors in the survey. The analysis
-suggests that awareness, accessibility, confidentiality and
-workplace support are important areas for organizations to
-consider.
+Mental health treatment-seeking behaviour varies across demographic
+and workplace factors in this survey.
 
-These findings can help technology organizations identify areas
-where workplace mental health support and communication may be
-strengthened.
+The dashboard helps identify patterns related to family history,
+work interference, workplace benefits, company size and other
+factors that may be relevant when studying mental-health support
+in technology workplaces.
+
+Overall, the analysis can be used as a starting point for
+understanding employee experiences and identifying areas where
+mental-health awareness, accessibility and workplace support can
+be strengthened.
+
+These findings should be interpreted as associations observed in
+the survey data rather than evidence of cause and effect.
 """)
+
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.markdown("""
+<div class="footer">
+
+<b>Mental Health in Tech Survey</b><br>
+
+Exploratory Data Analysis Dashboard<br>
+
+Built with Python • Pandas • Matplotlib • Seaborn • Plotly • Streamlit
+
+</div>
+""", unsafe_allow_html=True)
